@@ -157,6 +157,10 @@ body{
   color:var(--deep-sky); min-height:1.2em; text-align:center; line-height:1;
 }
 .dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.discussion .discussion-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+.discussion h1{font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:clamp(36px,7vw,64px);margin:0;color:var(--ink);}
+.discussion .hint{font-family:'Caveat',cursive;font-size:clamp(18px,2.6vw,25px);font-weight:600;color:var(--deep-sky);}
+
 .dot{
   width:7px; height:7px; border-radius:50%; background:var(--rule);
   border:0; padding:0; cursor:pointer; transition:background .2s ease, transform .2s ease;
@@ -189,6 +193,13 @@ body{
 </div>
 
 <div class="outro" id="outro"><img id="outroImg" src="" alt="Closing illustration"></div>
+<div class="outro discussion" id="discussion">
+  <div class="discussion-inner">
+    <div class="eyebrow"><span class="bead"></span>Pause here</div>
+    <h1>Discussion</h1>
+    <div class="hint">Click or space to go back to the panels</div>
+  </div>
+</div>
 
 <div class="topbar" id="topbar">
   <button class="btn" id="backBtn" type="button">← panels</button>
@@ -218,7 +229,8 @@ body{
   var dotsEl = document.getElementById('dots');
   var topName = document.getElementById('topName');
 
-  var cur = null, step = 0, inPanel = false, pieceEls = [], total = 0;
+  var cur = null, step = 0, inPanel = false, pieceEls = [], total = 0, discussionShown = false;
+  var discussion = document.getElementById('discussion');
   function tag(name){ return name.replace(/<[^>]+>/g, ''); }
 
   PANELS.forEach(function(P){
@@ -290,7 +302,7 @@ body{
       if (on && el.classList.contains('full')) fullShowing = true;
     });
     var atOutro = !!cur.outro && step > reveal;
-    var atEnd = atOutro || fullShowing;   // hide chrome for either kind of full-bleed moment
+    var atEnd = atOutro || fullShowing || discussionShown;   // hide chrome for any full-bleed moment
     var dots = Array.prototype.slice.call(dotsEl.children);
     dots.forEach(function(d, idx){
       d.classList.toggle('on', (idx + 1) <= step);
@@ -304,12 +316,13 @@ body{
   function go(n){ step = Math.max(0, Math.min(total, n)); render(); }
   function next(){
     if (step < total) { go(step + 1); return; }
-    if (cur.outro) backToHub();   // already on the terminal outro — advancing means "done"
+    if (!discussionShown) { discussionShown = true; discussion.classList.add('show'); render(); return; }
+    backToHub();
   }
   function prev(){ if (step > 0) go(step - 1); }
 
   function openPanel(P){
-    cur = P; inPanel = true;
+    cur = P; inPanel = true; discussionShown = false; discussion.classList.remove('show');
     total = P.reveal + (P.outro ? 1 : 0);
     buildBoard(P);
     dotsFor(total);
@@ -326,6 +339,8 @@ body{
     topbar.classList.remove('live', 'at-end');
     statusBar.classList.remove('live', 'at-end');
     outro.classList.remove('show');
+    discussionShown = false;
+    discussion.classList.remove('show');
     hub.classList.remove('hide');
     step = 0;
   }
@@ -334,6 +349,7 @@ body{
   board.addEventListener('click', function(){ if (inPanel) next(); });
   wrap.addEventListener('click', function(e){ if (inPanel && e.target === e.currentTarget) next(); });
   outro.addEventListener('click', function(e){ e.stopPropagation(); backToHub(); });
+  discussion.addEventListener('click', function(e){ e.stopPropagation(); backToHub(); });
   document.addEventListener('keydown', function(e){
     if (!inPanel) return;
     if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'ArrowRight'){ e.preventDefault(); next(); }
