@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Journey + Agentics</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0b0b0c; overflow: hidden; }
+  .frame-wrap { position: fixed; inset: 0; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+  iframe.hidden { display: none; }
+
+  #switcher {
+    position: fixed;
+    bottom: 14px;
+    right: 14px;
+    z-index: 1000;
+    display: flex;
+    gap: 6px;
+    background: rgba(20, 20, 22, 0.55);
+    padding: 6px;
+    border-radius: 999px;
+    font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    opacity: 0.25;
+    transition: opacity 0.15s ease;
+  }
+  #switcher:hover { opacity: 1; }
+  #switcher button {
+    appearance: none;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: transparent;
+    color: #eee;
+    cursor: pointer;
+    font: inherit;
+  }
+  #switcher button.on { background: #fff; color: #111; font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <div class="frame-wrap">
+    <iframe id="frame-journey" src="sections/journey.html" title="Journey"></iframe>
+    <iframe id="frame-howtoai" class="hidden" src="sections/how-to-ai.html" title="How to AI"></iframe>
+  </div>
+
+  <div id="switcher">
+    <button id="btn-journey" class="on" type="button">1 · Journey / Closing</button>
+    <button id="btn-howtoai" type="button">2 · How-to-AI</button>
+  </div>
+
+  <script>
+    const journeyFrame = document.getElementById('frame-journey');
+    const howtoaiFrame = document.getElementById('frame-howtoai');
+    const btnJourney = document.getElementById('btn-journey');
+    const btnHowtoai = document.getElementById('btn-howtoai');
+
+    function show(which) {
+      const journeyOn = which === 'journey';
+      journeyFrame.classList.toggle('hidden', !journeyOn);
+      howtoaiFrame.classList.toggle('hidden', journeyOn);
+      btnJourney.classList.toggle('on', journeyOn);
+      btnHowtoai.classList.toggle('on', !journeyOn);
+      // Give the now-visible iframe keyboard focus so its own
+      // space/arrow-key controls work immediately after switching.
+      const active = journeyOn ? journeyFrame : howtoaiFrame;
+      setTimeout(() => active.focus(), 0);
+    }
+
+    btnJourney.addEventListener('click', () => show('journey'));
+    btnHowtoai.addEventListener('click', () => show('howtoai'));
+
+    function handleSwitchKey(e) {
+      if (e.key === '1') show('journey');
+      if (e.key === '2') show('howtoai');
+    }
+    document.addEventListener('keydown', handleSwitchKey);
+
+    // Same-origin iframes: forward the 1/2 switch keys even when focus
+    // is inside an iframe, so the presenter never has to click the corner
+    // buttons mid-talk. Neither app's own controls use digit keys.
+    function wireIframeKeys(frame) {
+      frame.addEventListener('load', () => {
+        try {
+          frame.contentWindow.document.addEventListener('keydown', handleSwitchKey);
+        } catch (err) { /* ignore if not accessible */ }
+      });
+    }
+    wireIframeKeys(journeyFrame);
+    wireIframeKeys(howtoaiFrame);
+  </script>
+
+</body>
+</html>
